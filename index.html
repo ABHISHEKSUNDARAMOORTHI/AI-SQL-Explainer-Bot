@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI SQL Explainer Bot</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        text-align: center;
+        color: #0056b3;
+        margin-bottom: 10px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+      textarea {
+        width: calc(100% - 20px);
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 14px;
+        min-height: 150px;
+        resize: vertical;
+      }
+      button {
+        display: block;
+        width: 100%;
+        padding: 12px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .explanation-container {
+        margin-top: 15px;
+        padding: 20px;
+        background-color: #e9ecef;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        min-height: 50px;
+        word-wrap: break-word;
+      }
+      .explanation-container h2 {
+        color: #0056b3;
+        margin-top: 0;
+        margin-bottom: 15px;
+        text-align: center;
+      }
+      .explanation-container p {
+        margin-bottom: 10px;
+        line-height: 1.6;
+      }
+      .error-message {
+        color: red;
+        font-weight: bold;
+        margin-top: 15px;
+        text-align: center;
+      }
+      .loading-spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: #007bff;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>AI SQL Explainer Bot</h1>
+
+      <label for="sqlInput">Enter your SQL query:</label>
+      <textarea
+        id="sqlInput"
+        placeholder="e.g., SELECT customer_name, SUM(amount) FROM orders GROUP BY customer_name;"
+      ></textarea>
+
+      <button id="explainButton">Explain SQL</button>
+
+      <div class="loading-spinner" id="loadingSpinner"></div>
+      <div class="error-message" id="errorMessage"></div>
+
+      <div class="explanation-container">
+        <h2>Explanation</h2>
+        <p id="explanationOutput">Your SQL explanation will appear here.</p>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("explainButton")
+        .addEventListener("click", async () => {
+          const sqlQuery = document.getElementById("sqlInput").value;
+          const explanationOutput =
+            document.getElementById("explanationOutput");
+          const errorMessage = document.getElementById("errorMessage");
+          const loadingSpinner = document.getElementById("loadingSpinner");
+
+          explanationOutput.textContent = "";
+          errorMessage.textContent = "";
+          loadingSpinner.style.display = "block";
+          document.getElementById("explainButton").disabled = true;
+
+          if (!sqlQuery.trim()) {
+            errorMessage.textContent = "Please enter a SQL query to explain.";
+            loadingSpinner.style.display = "none";
+            document.getElementById("explainButton").disabled = false;
+            return;
+          }
+
+          try {
+            const response = await fetch("/explain", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ sql_query: sqlQuery }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              explanationOutput.innerHTML = data.explanation.trim();
+            } else {
+              errorMessage.textContent =
+                data.error || "An unknown error occurred.";
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            errorMessage.textContent =
+              "Could not connect to the server. Please ensure the backend is running.";
+          } finally {
+            loadingSpinner.style.display = "none";
+            document.getElementById("explainButton").disabled = false;
+          }
+        });
+    </script>
+  </body>
+</html>
